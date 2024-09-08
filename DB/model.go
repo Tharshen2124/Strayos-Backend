@@ -1,20 +1,26 @@
 package DB
 
+import (
+	"time"
+)
+
 type User struct {
-	UserId 			string	`json:"UserId"`
-	Name 			string	`json:"Name"`
-	Email  			string	`json:"Email"`
-	Password 		string	`json:"Password"`
-	CreatedAt		string	`json:"CreatedAt"`
-	UpdatedAt  		string	`json:"UpdatedAt"`
+	UserId 			string	`json:"UserId" gorm:"primaryKey;autoIncrement"`
+	Username 		string	`json:"Username" `
+	Email			string	`json:"Email"`
+	Password 		string	`json:"Password" `
+	CreatedAt		time.Time	`json:"CreatedAt" gorm:"autoCreateTime"`
+	UpdatedAt  		time.Time	`json:"UpdatedAt" gorm:"autoUpdateTime"`
 }
 
 type StrayPet struct {
-	StrayPetId		string	`json:"PetId"`
+	StrayPetId		string	`json:"StrayPetId"`
 	Animal 			string	`json:"Animal"`
 	Breed 			string	`json:"Breed"`
-	CreatedAt		string	`json:"CreatedAt"`
-	UpdatedAt		string	`json:"UpdatedAt"`
+	Latitude		string	`json:"Latitude"`
+	Longitude		string	`json:"Longitude"`
+	CreatedAt		time.Time	`json:"CreatedAt" gorm:"autoCreateTime"`
+	UpdatedAt  		time.Time	`json:"UpdatedAt" gorm:"autoUpdateTime"`
 }
 
 type MissingPets struct {

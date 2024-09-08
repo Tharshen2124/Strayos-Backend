@@ -1,15 +1,15 @@
 package DB
 
 import (
-	"database/sql"
+	"gorm.io/gorm"
+	"gorm.io/driver/postgres"
 	"github.com/joho/godotenv"
 	"os"
 	"log"
 	"fmt"
-	_ "github.com/lib/pq"
 )
 
-func DBConnect() *sql.DB  {
+func DBConnect() *gorm.DB  {
 	if err := godotenv.Load(); err != nil {
     	log.Fatal("Error loading .env file")
   	}
@@ -18,8 +18,8 @@ func DBConnect() *sql.DB  {
 	dbName := os.Getenv("DB_NAME")
 	dbSSLMode := os.Getenv("DB_SSLMODE")
 
-	connStr := fmt.Sprintf("user=%s dbname=%s sslmode=%s", dbUser, dbName, dbSSLMode)
-	db, err := sql.Open("postgres", connStr)
+	dsn := fmt.Sprintf("user=%s dbname=%s sslmode=%s", dbUser, dbName, dbSSLMode)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		log.Fatalf("Failed to connect to Database %v", err)

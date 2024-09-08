@@ -1,65 +1,145 @@
 package UserController
 
 import (
-	"net/http"
 	"encoding/json"
 	"example/main/DB"
-	"log"
-	"github.com/gorilla/mux"
+	"example/main/utils"
 	"fmt"
+	"net/http"
+	"github.com/go-playground/validator/v10"
 )
 
-func SignupUser(w http.ResponseWriter, r *http.Request) {
-
+type Response struct {
+	Message string `json:"message"`
+	Data any `json:"data"`
 }
 
-func LoginUser(w http.ResponseWriter, r *http.Request) {
-	// var user DB.User
-	value := r.Body
-	fmt.Println(value)
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Error any `json:"error"`
 }
 
-func GetUser(w http.ResponseWriter, r *http.Request) {
+type ValidationError struct {
+	Key string
+	Error string
+}
+
+func SignupUser(w http.ResponseWriter, request *http.Request) {
 	var user DB.User
-	vars := mux.Vars(r)
-	userId := vars["userId"]
 	db := DB.DBConnect()
-	rows , err := db.Query("SELECT * FROM users where user_id = $1", userId)
 
-	if err != nil {
-		log.Fatalf("Error during querying : %v", err)
-		return 
-	} else {
-		defer rows.Close()
-		for rows.Next() {
-			if err := rows.Scan(&user.UserId, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt); err != nil {
-				log.Fatalf("Error: %v", err)
-				return
-			} 
+	jsonDecoderError := json.NewDecoder(request.Body).Decode(&user)
+	if jsonDecoderError != nil {
+		errorResponse := ErrorResponse{
+			Message: "An error occured during decoding",
+			Error: jsonDecoderError,
 		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorResponse)
+		return
 	}
-	json.NewEncoder(w).Encode(user)
+	
+	validate := utils.GetValidator()
+	rules := map[string]string{
+		"Username": "required",
+		"Email":  "required",
+		"Password": "required",
+	}
+
+	validate.RegisterStructValidationMapRules(rules, DB.User{})
+
+	if validationErrors := validate.Struct(user); validationErrors != nil {
+		errorMap := make(map[string]interface{})
+        for _, validationError := range validationErrors.(validator.ValidationErrors) {
+			validationErrorValue := fmt.Sprintf("This Field with validation '%s' has failed",validationError.ActualTag())
+			errorMap[validationError.Field()] = validationErrorValue 
+        }
+		errorResponse := ErrorResponse{
+			Message: "An error occured during validation",
+			Error: errorMap,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorResponse)
+		return
+	}
+
+	user.Password, _ = utils.HashPassword(user.Password)
+
+	db.Create(&user)
+	
+	response := Response{
+		Message: "Successfully registered user!",
+		Data: user,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
-func GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	var users []DB.User
+func LoginUser(w http.ResponseWriter, request *http.Request) {
+	var user DB.User
 	db := DB.DBConnect()
-	rows, err := db.Query("SELECT * FROM users;")
-	
-	if err != nil {
-		log.Fatalf("Error during querying : %v", err)
-		return 
-	} else {
-		defer rows.Close()
-		for rows.Next() {
-			var user DB.User
-			if err := rows.Scan(&user.UserId, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt); err != nil {
-				log.Fatalf("Error: %v", err)
-				return
-			} 
-			users = append(users, user)
+
+	jsonDecoderError := json.NewDecoder(request.Body).Decode(&user)
+	if jsonDecoderError != nil {
+		errorResponse := ErrorResponse{
+			Message: "An error occured during decoding",
+			Error: jsonDecoderError,
 		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorResponse)
+		return
+	}
+	
+	validate := utils.GetValidator()
+	rules := map[string]string{
+		"Email":  "required",
+		"Password": "required",
+	}
+	
+	validate.RegisterStructValidationMapRules(rules, DB.User{})
+
+	if validationErrors := validate.Struct(user); validationErrors != nil {
+		errorMap := make(map[string]interface{})
+        for _, validationError := range validationErrors.(validator.ValidationErrors) {
+			validationErrorValue := fmt.Sprintf("This Field with validation '%s' has failed",validationError.ActualTag())
+			errorMap[validationError.Field()] = validationErrorValue 
+        }
+		errorResponse := ErrorResponse{
+			Message: "An error occured during validation",
+			Error: errorMap,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorResponse)
+		return
 	}
 
-	json.NewEncoder(w).Encode(users)
+	requestPassword := user.Password
+
+	value := db.Where("email = ?", user.Email).Find(&user).Scan(&user)
+	if value.Error != nil {
+		fmt.Println(value.Error)
+		return
+	}
+
+	comparePasswordHashError := utils.CheckPasswordHash(requestPassword, user.Password)
+	
+	if comparePasswordHashError!= nil {
+		errorResponse := ErrorResponse{
+			Message: "An error occured",
+			Error: "Password does not match",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorResponse)
+		return
+	}
+
+	response := Response{
+		Message: "Succesfully logged w user!",
+		Data: user,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }

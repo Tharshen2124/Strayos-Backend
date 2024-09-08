@@ -8,10 +8,10 @@ func TestPostgresConnection() {
 	
 }
 
-func TestGetUserDetails() {
+func TestdSignup() {
 
 }
 
-func TestPostUserDetails() {
+func TestLogin() {
 
 }
