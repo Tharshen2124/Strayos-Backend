@@ -16,6 +16,7 @@ func main() {
 	r.HandleFunc("/signup", UserController.SignupUser).Methods("POST")
 	r.HandleFunc("/login", UserController.LoginUser).Methods("POST")
 	r.HandleFunc("/stray-pets", StrayPetsController.Index).Methods("GET")
+	r.HandleFunc("/stray-pets", StrayPetsController.Create).Methods("POST")
 
 	handler := cors.Default().Handler(r)
 

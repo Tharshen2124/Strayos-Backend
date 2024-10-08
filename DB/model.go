@@ -14,9 +14,9 @@ type User struct {
 }
 
 type StrayPet struct {
-	StrayPetId		string	`json:"StrayPetId"`
+	StrayPetId		string	`json:"StrayPetId" gorm:"primaryKey;autoIncrement"`
 	Animal 			string	`json:"Animal"`
-	Breed 			string	`json:"Breed"`
+	Status			string	`json:"Status"`
 	Latitude		string	`json:"Latitude"`
 	Longitude		string	`json:"Longitude"`
 	CreatedAt		time.Time	`json:"CreatedAt" gorm:"autoCreateTime"`
@@ -31,3 +31,4 @@ type MissingPets struct {
 	CreatedAt		string	`json:"CreatedAt"`
 	UpdatedAt		string	`json:"UpdatedAt"`
 }
+
