@@ -13,8 +13,11 @@ import (
 func main() {
 	r := mux.NewRouter()
 	
-	r.HandleFunc("/signup", UserController.SignupUser).Methods("POST")
-	r.HandleFunc("/login", UserController.LoginUser).Methods("POST")
+	// routes
+	r.HandleFunc("/signup", UserController.LegacySignupUser).Methods("POST")
+	r.HandleFunc("/login", UserController.LegacyLoginUser).Methods("POST")
+	r.HandleFunc("/auth/login", UserController.SignupWithGoogleOAuth).Methods("GET")
+	r.HandleFunc("/auth/callback", UserController.CallBack).Methods("GET")
 	r.HandleFunc("/stray-pets", StrayPetsController.Index).Methods("GET")
 	r.HandleFunc("/stray-pets", StrayPetsController.Create).Methods("POST")
 
