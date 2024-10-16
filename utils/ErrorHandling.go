@@ -12,6 +12,5 @@ func HandleValidationError(validationErrors any, w http.ResponseWriter) {
 		validationErrorValue := fmt.Sprintf("This Field with validation '%s' has failed",validationError.ActualTag())
 		errorMap[validationError.Field()] = validationErrorValue 
     }
-	message := "Error occured during validation"
-	BadResponse(errorMap, message, w)
+	BadResponse(errorMap, w)
 }

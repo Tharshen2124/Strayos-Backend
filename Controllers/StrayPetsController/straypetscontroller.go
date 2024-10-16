@@ -3,12 +3,12 @@ package StrayPetsController
 import (
 	"encoding/json"
 	"example/main/DB"
+	"example/main/Models"
 	"example/main/utils"
 	"fmt"
 	"log"
 	"net/http"
 	"github.com/go-playground/validator/v10"
-	// "github.com/gorilla/websocket"
 )
 
 type Response struct {
@@ -26,14 +26,8 @@ type ValidationError struct {
 	Error string
 }
 
-// var upgrader = websocket.Upgrader{
-// 	CheckOrigin: func(r *http.Request) bool {
-// 		return true
-// 	},
-// }
-
 func Index(w http.ResponseWriter, request *http.Request) {
-    var strayPets []DB.StrayPet
+    var strayPets []Models.StrayPet
     db := DB.DBConnect()
 
     result := db.Find(&strayPets)
@@ -48,31 +42,10 @@ func Index(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
-
-    // data, marshalError := json.Marshal(strayPets)
-    // if marshalError != nil {
-    //     fmt.Println("Marshal Error: ", marshalError)
-    // }
-
-	// conn, upgradeError := upgrader.Upgrade(w, request, nil)
-	// if upgradeError != nil {
-	// 	fmt.Println("Error upgrading: ", upgradeError)
-	// 	return
-	// }
-
-	// defer conn.Close()
-
-	// for {
-    //     WriteError := conn.WriteMessage(websocket.TextMessage, data)
-	// 	if  WriteError != nil {
-	// 		fmt.Println("Error writing message:", WriteError)
-	// 		break
-	// 	}
-	// }
 }
 
 func Create(w http.ResponseWriter, request *http.Request) {
-    var strayPet DB.StrayPet
+    var strayPet Models.StrayPet
     db := DB.DBConnect()
 
     jsonDecoderError := json.NewDecoder(request.Body).Decode(&strayPet)
@@ -89,10 +62,13 @@ func Create(w http.ResponseWriter, request *http.Request) {
     validate := utils.GetValidator()
     rules := map[string]string{
         "Animal": "required",
+        "UserId": "required",
         "Status": "required",
+        "Latitude": "required",
+        "Longitude": "required",
     }
 
-    validate.RegisterStructValidationMapRules(rules, DB.StrayPet{})
+    validate.RegisterStructValidationMapRules(rules, Models.StrayPet{})
     if validationErrors := validate.Struct(strayPet); validationErrors != nil {
 		errorMap := make(map[string]interface{})
         for _, validationError := range validationErrors.(validator.ValidationErrors) {
@@ -110,59 +86,14 @@ func Create(w http.ResponseWriter, request *http.Request) {
 
     db.Create(&strayPet)
 
-    response := Response{
-        Data: strayPet,
-    }
-    w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+     // Preload the User data
+     var savedStrayPet Models.StrayPet
+     db.Preload("User").First(&savedStrayPet, strayPet.StrayPetId)
+ 
+     response := Response{
+         Data: savedStrayPet,
+     }
+     w.Header().Set("Content-Type", "application/json")
+     w.WriteHeader(http.StatusCreated)
+     json.NewEncoder(w).Encode(response)
 }
-
-// _, message, ReadError := conn.ReadMessage()
-// if ReadError != nil {
-//     fmt.Println("Error reading message:", ReadError)
-//     break
-// }
-// fmt.Printf("Received: %s \n", message)
-
-
-
-// func Index(w http.ResponseWriter, request *http.Request) {
-//     conn, err := upgrader.Upgrade(w, request, nil)
-//     if err != nil {
-//        fmt.Println("Error upgrading:", err)
-//        return
-//     }
-//     defer conn.Close()
-
-//     go handleConnection(conn)
-// }
-
-// func handleConnection(conn *websocket.Conn) {
-//     // WebSocket Ping/Pong to keep connection alive
-//     conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-//     conn.SetPongHandler(func(string) error {
-//         conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-//         return nil
-//     })
-
-//     for {
-//         _, message, readError := conn.ReadMessage()
-//         if readError != nil {
-//             if websocket.IsUnexpectedCloseError(readError, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-//                 fmt.Printf("Unexpected close error: %v\n", readError)
-//             } else {
-//                 fmt.Printf("Connection closed: %v\n", readError)
-//             }
-//             break
-//         }
-
-//         fmt.Printf("Received: %s\n", message)
-//         writeError := conn.WriteMessage(websocket.TextMessage, message)
-
-//         if writeError != nil {
-//             fmt.Println("Error writing message:", writeError)
-//             break
-//         }
-//     }
-// }
