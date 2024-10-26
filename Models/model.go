@@ -15,16 +15,18 @@ type User struct {
 	UpdatedAt  		time.Time	`json:"UpdatedAt" gorm:"autoUpdateTime"`
 }
 
-type StrayPet struct {
-    StrayPetId string    `json:"StrayPetId" gorm:"primaryKey;autoIncrement"`
-    UserId     string    `json:"UserId"` // This should match the type of the primary key in User struct
-    Animal     string    `json:"Animal"`
-    Status     string    `json:"Status"`
-    Latitude   string    `json:"Latitude"`
-    Longitude  string    `json:"Longitude"`
-    CreatedAt  time.Time `json:"CreatedAt" gorm:"autoCreateTime"`
-    UpdatedAt  time.Time `json:"UpdatedAt" gorm:"autoUpdateTime"`
-    User       User      `gorm:"foreignKey:UserId;references:UserId"` // Use the correct field reference here
+type StrayPet struct {	
+    StrayPetId 		string    	`json:"StrayPetId" gorm:"primaryKey;autoIncrement"`
+    UserId     		string    	`json:"UserId"` // This should match the type of the primary key in User struct
+    Animal    		string    	`json:"Animal"`
+    Status     		string    	`json:"Status"`
+    Latitude   		string    	`json:"Latitude"`
+    Longitude  		string    	`json:"Longitude"`
+	Image	   		string	 	`json:"Image,omitempty"`
+	ImagePublicID	string	 	`json:"ImagePublicID,omitempty"`
+    CreatedAt  		time.Time 	`json:"CreatedAt" gorm:"autoCreateTime"`
+    UpdatedAt  		time.Time 	`json:"UpdatedAt" gorm:"autoUpdateTime"`
+    User       		User      	`gorm:"foreignKey:UserId;references:UserId"` // Use the correct field reference here
 }
 
 

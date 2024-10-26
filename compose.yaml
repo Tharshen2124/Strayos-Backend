@@ -1,0 +1,26 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    develop:
+      watch:
+      - path: .
+        action: sync+restart
+        target: /src
+      - path: ./go.mod
+        action: rebuild
+    environment:
+      DB_HOST: "127.0.0.1"
+      DB_PORT: 5432
+      DB_USER: "tharshensurianbalan"
+      DB_PASSWORD: 
+      DB_NAME: "petofindo"
+      DB_SSLMODE: "disable"
+      JWT_KEY: "220204Thz#!"
+      CLOUDINARY_URL: "cloudinary://339131913842253:gGxB6AUm33wLL5CTAPXwkF7wPsY@dnspp43ql"
+      CLOUDINARY_API_KEY: 339131913842253
+      CLOUDINARY_API_SECRET: "gGxB6AUm33wLL5CTAPXwkF7wPsY"
+    

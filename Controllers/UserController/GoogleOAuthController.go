@@ -1,16 +1,35 @@
 package UserController
 
-// import (
-// 	"context"
-// 	"encoding/json"
-// 	"example/main/DB"
-// 	"example/main/utils"
-// 	"log"
-// 	"net/http"
-// 	"os"
-// 	"github.com/joho/godotenv"
-// 	"golang.org/x/oauth2"
-// )
+import (
+	// "context"
+	// "encoding/json"
+	// "example/main/DB"
+	// "example/main/utils"
+	// "log"
+	"encoding/json"
+	"example/main/DB"
+	"example/main/Models"
+	"example/main/utils"
+	"log"
+	"net/http"
+	// "os"
+	// "github.com/joho/godotenv"
+	// "golang.org/x/oauth2"
+)
+
+type RequestData struct {
+	AccessToken string `json:"accessToken"`
+}
+
+type ResponseData struct {
+	Sub 			string `json:"sub"`
+	Name 			string `json:"name"`
+	GivenName 		string `json:"given_name"`
+	FamilyName 		string `json:"family_name"`
+	Picture 		string `json:"picture"`
+	Email 			string `json:"email"`
+}
+
 
 // var oAuthConfig *oauth2.Config
 
@@ -114,3 +133,76 @@ package UserController
 // 		}
 // 	}
 // }
+
+func SignupWithGoogleOAuth(w http.ResponseWriter, request *http.Request) {
+	var accessToken RequestData
+	var userInfo ResponseData
+	var userData Models.User
+	db := DB.DBConnect()
+	// log.Print(request.Body)
+	jsonDecoderError := json.NewDecoder(request.Body).Decode(&accessToken)
+
+	if jsonDecoderError != nil {
+		log.Printf("JSON Decoder error: %v",  jsonDecoderError)
+	}
+
+	response, err := http.Get("https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + accessToken.AccessToken)
+
+	if err != nil {
+		log.Printf("Error during fetching: %v", err)
+	} else {
+		jsonDecoderError := json.NewDecoder(response.Body).Decode(&userInfo)
+		if jsonDecoderError != nil {
+			log.Printf("Error during decoding: %v", jsonDecoderError)
+		}
+	}
+
+	if err := db.Where("email = ?", userInfo.Email).First(&userData).Error; err != nil {
+		log.Printf("Error occured during querying: %v", err.Error())
+
+		if err.Error() == "record not found" {
+			userData.Username = userInfo.Name
+			userData.Email = userInfo.Email
+			userData.Provider = "Gmail"
+			userData.GoogleID = userInfo.Sub
+
+			result := db.Create(&userData)
+			if result.Error != nil {
+				log.Printf("Error inserting data: %v", result.Error)
+			} else {
+				log.Printf("Successfully inserted data!")
+
+				signedJwtToken, jwtTokenError := utils.CreateToken(userData)
+				if jwtTokenError != nil {
+					log.Printf("Error in creating JWT Token: %v", jwtTokenError)
+					utils.BadResponse(jwtTokenError, w)
+				}
+
+				utils.AuthOkResponse(signedJwtToken, w)
+			}
+		}
+	} else {
+		if userData.GoogleID == "" {
+			userData.GoogleID = userInfo.Sub
+			userData.Provider = "Gmail"
+
+			db.Save(&userData)
+
+			signedJwtToken, jwtTokenError := utils.CreateToken(userData)
+			if jwtTokenError != nil {
+				log.Printf("Error in creating JWT Token: %v", jwtTokenError)
+				utils.BadResponse(jwtTokenError, w)
+			}
+
+			utils.AuthOkResponse(signedJwtToken, w)
+		} else {
+			signedJwtToken, jwtTokenError := utils.CreateToken(userData)
+			if jwtTokenError != nil {
+				log.Printf("Error in creating JWT Token: %v", jwtTokenError)
+				utils.BadResponse(jwtTokenError, w)
+			}
+
+			utils.AuthOkResponse(signedJwtToken, w)
+		}
+	}
+}
