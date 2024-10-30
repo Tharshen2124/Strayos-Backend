@@ -24,11 +24,11 @@ type StrayPet struct {
     Longitude  		string    	`json:"Longitude"`
 	Image	   		string	 	`json:"Image,omitempty"`
 	ImagePublicID	string	 	`json:"ImagePublicID,omitempty"`
+	ImageURL		string		`json:"ImageURL,omitempty"`
     CreatedAt  		time.Time 	`json:"CreatedAt" gorm:"autoCreateTime"`
     UpdatedAt  		time.Time 	`json:"UpdatedAt" gorm:"autoUpdateTime"`
     User       		User      	`gorm:"foreignKey:UserId;references:UserId"` // Use the correct field reference here
 }
-
 
 // type MissingPets struct {
 // 	MissingPetsId 	string	`json:"MissingPetsId"`

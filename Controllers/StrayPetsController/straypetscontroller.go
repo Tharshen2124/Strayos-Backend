@@ -44,8 +44,10 @@ func Index(w http.ResponseWriter, request *http.Request) {
 }
 
 func Create(w http.ResponseWriter, request *http.Request) {
-    // var strayPet Models.StrayPet
-    // db := DB.DBConnect()
+    var strayPet Models.StrayPet
+    var savedStrayPet Models.StrayPet
+    db := DB.DBConnect()
+    
     cloudinaryInstance, ctx := SDKs.Credentials()
     request.ParseMultipartForm(10 << 20)
     file, handler, err := request.FormFile("Image")
@@ -55,40 +57,46 @@ func Create(w http.ResponseWriter, request *http.Request) {
         return
     }
 
-    SDKs.UploadImage(cloudinaryInstance, ctx, file, handler.Filename)
-    SDKs.GetAssetInfo(cloudinaryInstance, ctx, handler.Filename)
-    SDKs.TransformImage(cloudinaryInstance, ctx, handler.Filename)
-    
-    // validate := utils.GetValidator()
-    // rules := map[string]string{
-    //     "Animal": "required",
-    //     "UserId": "required",
-    //     "Status": "required",
-    //     "Image": "required",
-    //     "Latitude": "required",
-    //     "Longitude": "required",
-    // }
+    strayPet.Animal = request.FormValue("Animal")
+    strayPet.Status = request.FormValue("Status")
+    strayPet.UserId = request.FormValue("UserId")
+    strayPet.Latitude = request.FormValue("Latitude")
+    strayPet.Longitude = request.FormValue("Longitude")
 
-    // validate.RegisterStructValidationMapRules(rules, Models.StrayPet{})
-    // if validationErrors := validate.Struct(strayPet); validationErrors != nil {
-    //     utils.HandleValidationError(validationErrors, w)
-	// }
+    validate := utils.GetValidator()
+    rules := map[string]string{
+        "Animal": "required",
+        "UserId": "required",
+        "Status": "required",
+        "Latitude": "required",
+        "Longitude": "required",
+    }
 
-    // log.Printf("Image: %v", strayPet.Image)
+    validate.RegisterStructValidationMapRules(rules, Models.StrayPet{})
+    if validationErrors := validate.Struct(strayPet); validationErrors != nil {
+        utils.HandleValidationError(validationErrors, w)
+        return
+	}
 
-    // SDKs.UploadImage(cloudinaryInstance, ctx, strayPet.Image)
-    // SDKs.GetAssetInfo()
+    imagePublicID := SDKs.GeneratePrefixedUniqueID()
+    SDKs.UploadImage(cloudinaryInstance, ctx, file, imagePublicID)
+    ImageURL := SDKs.GetTransformedImage(cloudinaryInstance, ctx, imagePublicID)
 
-    // db.Create(&strayPet)
+    strayPet.ImageURL = ImageURL
+    strayPet.ImagePublicID = imagePublicID
+    strayPet.Image = handler.Filename
 
-    //  // Preload the User data
-    //  var savedStrayPet Models.StrayPet
-    //  db.Preload("User").First(&savedStrayPet, strayPet.StrayPetId)
+    log.Print(strayPet)
+
+    db.Create(&strayPet)
+
+    db.Preload("User").First(&savedStrayPet, strayPet.StrayPetId)
  
-    //  response := Response{
-    //      Data: savedStrayPet,
-    //  }
-    //  w.Header().Set("Content-Type", "application/json")
-    //  w.WriteHeader(http.StatusCreated)
-    //  json.NewEncoder(w).Encode(response)
+    response := Response{
+        Data: savedStrayPet,
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusCreated)
+    json.NewEncoder(w).Encode(response)
 }

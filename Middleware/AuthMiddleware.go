@@ -10,7 +10,6 @@ import (
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		Log.Route(request)
-		Log.Error("your mum is cool")
 		authHeader := request.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
