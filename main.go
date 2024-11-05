@@ -4,6 +4,7 @@ import (
 	"example/main/Controllers/StrayPetsController"
 	"example/main/Controllers/UserController"
 	"example/main/Middleware"
+	"example/main/utils"
 	"log"
 	"net/http"
 	"github.com/gorilla/handlers"
@@ -21,6 +22,7 @@ func setCustomHeaders(next http.Handler) http.Handler {
 
 func main() {
 	r := mux.NewRouter()
+	frontendURL := utils.GetEnv("FRONTEND_URL")
 	
 	// routes
 	r.Handle("/signup", middleware.Guest(http.HandlerFunc(UserController.LegacySignupUser))).Methods("POST")
@@ -31,7 +33,7 @@ func main() {
 
 	// custom CORS settings
 	corsHandler := handlers.CORS(
-        handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+        handlers.AllowedOrigins([]string{frontendURL}),
         handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
         handlers.AllowedHeaders([]string{"Authorization", "Content-Type"}),
         handlers.AllowCredentials(),
