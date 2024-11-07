@@ -9,13 +9,18 @@ import (
 )
 
 func DBConnect() *gorm.DB  {
-	dbUser := utils.GetEnv("DB_USER")
-	dbName := utils.GetEnv("DB_NAME")
-	dbSSLMode := utils.GetEnv("DB_SSLMODE")
 	dbHost := utils.GetEnv("DB_HOST")
+	dbPort := utils.GetEnv("DB_PORT")
+	dbUser := utils.GetEnv("DB_USER")
 	dbPassword := utils.GetEnv("DB_PASSWORD")
+	dbName := utils.GetEnv("DB_NAME")
+	// dbSSLMode := utils.GetEnv("DB_SSLMODE")
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=%s", dbHost, dbUser, dbPassword, dbName, dbSSLMode)
+	// PostgreSQL connection string format:
+	// "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai"
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s",
+		dbHost, dbPort, dbUser, dbPassword, dbName)
+	
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
