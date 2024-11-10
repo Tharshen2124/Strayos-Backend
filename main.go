@@ -26,9 +26,12 @@ func main() {
 	r.Handle("/signup", middleware.Guest(http.HandlerFunc(UserController.LegacySignupUser))).Methods("POST")
 	r.Handle("/login", middleware.Guest(http.HandlerFunc(UserController.LegacyLoginUser))).Methods("POST")
 	r.Handle("/google-oauth/login", middleware.Guest(http.HandlerFunc(UserController.SignupWithGoogleOAuth))).Methods("POST")
-	r.Handle("/stray-pets", middleware.Auth(http.HandlerFunc(StrayPetsController.Index))).Methods("GET")
+	r.Handle("/stray-pets", middleware.Auth(http.HandlerFunc(StrayPetsController.Index))).Methods("GET") // this works
 	r.Handle("/stray-pets", middleware.Auth(http.HandlerFunc(StrayPetsController.Create))).Methods("POST")
-
+	r.Handle("/test-guest", middleware.Guest(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Guest route worked!"))
+	}))).Methods("POST")
+	
 	// custom CORS settings
 	corsHandler := handlers.CORS(
         handlers.AllowedOrigins([]string{"http://localhost:3000", "https://strayos.vercel.app"}),
