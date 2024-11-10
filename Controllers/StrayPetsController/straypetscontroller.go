@@ -8,6 +8,7 @@ import (
 	"example/main/utils"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Response struct {
@@ -59,7 +60,12 @@ func Create(w http.ResponseWriter, request *http.Request) {
 
     strayPet.Animal = request.FormValue("Animal")
     strayPet.Status = request.FormValue("Status")
-    strayPet.UserId = request.FormValue("UserId")
+    value, convertError := strconv.Atoi(request.FormValue("UserId")) 
+    if (convertError != nil) {
+        log.Print(convertError)
+        return
+    } 
+    strayPet.UserId = value
     strayPet.Latitude = request.FormValue("Latitude")
     strayPet.Longitude = request.FormValue("Longitude")
 
@@ -88,9 +94,21 @@ func Create(w http.ResponseWriter, request *http.Request) {
 
     log.Print(strayPet)
 
-    db.Create(&strayPet)
+    createResult := db.Create(&strayPet)
 
-    db.Preload("User").First(&savedStrayPet, strayPet.StrayPetId)
+    if createResult.Error != nil {
+        log.Print("Error Occured during storing data: \n")
+        log.Print(createResult.Error)
+        return
+    }
+
+    getResult := db.Preload("User").First(&savedStrayPet, strayPet.StrayPetId)
+
+    if getResult.Error != nil {
+        log.Print("Error Occured during getting data: \n")
+        log.Print(getResult.Error)
+        return
+    }
  
     response := Response{
         Data: savedStrayPet,
