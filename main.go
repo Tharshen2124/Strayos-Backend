@@ -37,6 +37,6 @@ func main() {
         handlers.AllowCredentials(),
     )
 
-	log.Println("Server is running on http://localhost:8000")
-	http.ListenAndServe(":8000", corsHandler(setCustomHeaders(r)))
+	log.Println("Server is running on http://localhost:8080")
+	http.ListenAndServe(":8080", corsHandler(setCustomHeaders(r)))
 }
