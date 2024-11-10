@@ -31,6 +31,7 @@ func main() {
 	r.Handle("/test-guest", middleware.Guest(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Guest route worked!"))
 	}))).Methods("POST")
+	r.Handle("/test-guest-second", middleware.Guest(http.HandlerFunc(UserController.TestMethod))).Methods("POST")
 	
 	// custom CORS settings
 	corsHandler := handlers.CORS(

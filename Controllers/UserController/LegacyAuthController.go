@@ -100,3 +100,10 @@ func LegacyLoginUser(w http.ResponseWriter, request *http.Request) {
 
 	utils.AuthOkResponse(signedJwtToken, w)
 }
+
+
+func TestMethod(w http.ResponseWriter, request *http.Request) {
+	signedJwtToken := "dog"
+
+	utils.AuthOkResponse(signedJwtToken, w)
+}
