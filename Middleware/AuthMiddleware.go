@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"example/main/Log"
 	"example/main/utils"
 	"net/http"
@@ -27,7 +28,13 @@ func Auth(next http.Handler) http.Handler {
 		_, err := utils.ParseJWTToken(tokenString)
  
 		if err != nil {
-			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+			errorResponse := utils.BadResponseType{
+				Message: "Error occured",
+				Error: err,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(errorResponse)
 			return
 		}
 		next.ServeHTTP(w, request)
